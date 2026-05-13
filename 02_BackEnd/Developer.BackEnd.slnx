@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/01_Presentation/">
+    <Project Path="01_Presentation/WebApi/WebApi.csproj" Id="55414c55-9bb9-43b7-aeb4-395e9d5f5c07" />
+  </Folder>
+  <Folder Name="/02_Business/">
+    <Project Path="02_Business/Domain/Domain.csproj" Id="8b5e8eb6-e8be-477e-bc5e-9bf00ed44d0b" />
+    <Project Path="02_Business/Shared/Shared.csproj" />
+  </Folder>
+  <Folder Name="/03_Infrastructure/">
+    <Project Path="03_Infrastructure/Data/Data.csproj" Id="8a668850-4bf4-4a83-bc94-945cc2bee1ba" />
+    <Project Path="03_Infrastructure/DataService/DataService.csproj" Id="e74ee136-de2d-49b2-985c-3c4657dfb60c" />
+  </Folder>
+  <Folder Name="/04_Tests/">
+    <Project Path="04_Tests/TestProject/TestProject.csproj" Id="e5f9f3f9-51e7-4189-bb7e-0f978fe7e158" />
+  </Folder>
+  <Folder Name="/05_Utilitarios/">
+    <Project Path="05_Utilitarios/Database/Database.sqlproj" Id="d09c8256-262f-491c-a209-4ab1a25ab1ec">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="../.gitignore" />
+  </Folder>
+</Solution>
