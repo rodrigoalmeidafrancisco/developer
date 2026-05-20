@@ -1,16 +1,32 @@
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers();
+using Shared.Settings;
+using WebApi.Configurations;
 
-var app = builder.Build();
+#region Configurações Builder
 
-if (app.Environment.IsDevelopment())
-{
-}
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-app.UseHttpsRedirection();
+//Obtendo as configurações da API "appsettings"
+SettingApp.Start(builder.Configuration, builder.Environment.WebRootPath);
 
-app.UseAuthorization();
+//Configurações da API
+builder.AddInitializer();
 
-app.MapControllers();
+//Configurações do Swagger
+builder.AddSwagger();
 
-app.Run();
+#endregion Configurações Builder
+
+#region Configurações APP
+
+WebApplication app = builder.Build();
+
+//Configurações da API
+app.UseInitializer();
+
+//Configurações do Swagger
+app.UseSwaggerInit();
+
+#endregion Configurações APP
+
+
+await app.RunAsync();
