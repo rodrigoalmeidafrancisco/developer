@@ -4,11 +4,11 @@ using WebApi.Configurations;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-//Configurações da API
-builder.AddInitializer();
 
-//Configurações do Swagger
-builder.AddSwagger();
+builder.AddInitializer(); //Configurações da API
+builder.AddAppInsights(); //Configurações do Application Insights
+builder.AddSwagger(); //Configurações do Swagger
+builder.AddAuthenticationCustom(); //Configurações de Autenticação e Autorização
 
 #endregion Configurações Builder
 
@@ -16,11 +16,10 @@ builder.AddSwagger();
 
 WebApplication app = builder.Build();
 
-//Configurações da API
-app.UseInitializer();
 
-//Configurações do Swagger
-app.UseSwaggerInit();
+app.UseInitializer(); //Configurações da API
+app.UseSwaggerInit(); //Configurações do Swagger
+app.UseAppInsights(); //Configurações do Application Insights
 
 #endregion Configurações APP
 

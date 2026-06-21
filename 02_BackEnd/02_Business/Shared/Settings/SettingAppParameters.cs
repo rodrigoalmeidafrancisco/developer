@@ -7,6 +7,7 @@
             Proxy = new SettingAppParametersProxy();
         }
 
+        public string KeyToken { get; set; }
         public SettingAppParametersProxy Proxy { get; set; }
     }
 

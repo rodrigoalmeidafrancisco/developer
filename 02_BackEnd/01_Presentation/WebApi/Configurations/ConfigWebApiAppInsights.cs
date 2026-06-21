@@ -12,6 +12,12 @@ namespace WebApi.Configurations
             // Garante que o builder foi informado antes de configurar os serviços.
             ArgumentNullException.ThrowIfNull(builder);
 
+            // Encerra o processamento caso a connection string do Application Insights não esteja definida.
+            if (string.IsNullOrWhiteSpace(SettingApp.ApplicationInsights.ConnectionString))
+            {
+                return;
+            }
+
             // Registra o Application Insights na aplicação.
             builder.Services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions()
             {
@@ -26,6 +32,12 @@ namespace WebApi.Configurations
         {
             // Garante que a aplicação foi informada antes de usar os serviços configurados.
             ArgumentNullException.ThrowIfNull(app);
+
+            // Encerra o processamento caso a connection string do Application Insights não esteja definida.
+            if (string.IsNullOrWhiteSpace(SettingApp.ApplicationInsights.ConnectionString))
+            {
+                return;
+            }
 
             // Obtém o cliente de telemetria registrado no container de injeção de dependência.
             var telemetry = app.Services.GetService<TelemetryClient>();
