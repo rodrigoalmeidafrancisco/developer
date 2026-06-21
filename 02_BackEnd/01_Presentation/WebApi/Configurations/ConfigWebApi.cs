@@ -3,70 +3,100 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Logging;
 using Shared.Commands._Base;
 using Shared.Settings;
+using System.IO.Compression;
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace WebApi.Configurations
 {
     public static class ConfigWebApi
     {
+        private const string AllowAllCorsPolicyName = "AllowAll";
+
         public static void AddInitializer(this WebApplicationBuilder builder)
         {
-            //habilitar a visualização de logs de PII
-            IdentityModelEventSource.ShowPII = true;
+            // Garante que o builder foi informado antes de iniciar a configuração da aplicação.
+            ArgumentNullException.ThrowIfNull(builder);
 
-            //Configura para utilizar o IIS, quando publicar.
+            // Habilita dados sensíveis de identidade apenas em desenvolvimento para facilitar o diagnóstico local.
+            IdentityModelEventSource.ShowPII = builder.Environment.IsDevelopment();
+
+            // Prepara a aplicação para funcionar corretamente quando hospedada com integração ao IIS.
             builder.WebHost.UseIISIntegration();
 
-            //Configura para exibir os logs no console ao debugar a aplicação.
-            builder.Logging.ClearProviders().AddConsole();
-
-            //Obtendo as configurações da API "appsettings"
+            // Carrega e centraliza as configurações da API a partir dos arquivos de ambiente.
             SettingApp.Start(builder.Configuration, builder.Environment.WebRootPath);
 
-            //Configurando o proxy
+            // Aplica o proxy padrão do processo para todas as saídas HTTP quando essa opção estiver habilitada.
             if (SettingApp.Parameters.Proxy.Enable)
             {
-                HttpClient.DefaultProxy = new WebProxy(new Uri(SettingApp.Parameters.Proxy.UrlPorta), true, SettingApp.Parameters.Proxy.ByPassArray)
+                if (string.IsNullOrWhiteSpace(SettingApp.Parameters.Proxy.UrlPorta))
+                {
+                    throw new InvalidOperationException("A configuração do proxy está habilitada, mas a UrlPorta não foi informada.");
+                }
+
+                HttpClient.DefaultProxy = new WebProxy(new Uri(SettingApp.Parameters.Proxy.UrlPorta, UriKind.Absolute), true, SettingApp.Parameters.Proxy.ByPassArray)
                 {
                     UseDefaultCredentials = false,
                     Credentials = CredentialCache.DefaultCredentials
                 };
             }
 
-            //Configura os parâmetros do System.Text.Json para o Retorno da API   
+            // Define o comportamento padrão de serialização JSON usado nas respostas dos controllers.
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
+                // Define a política de nomenclatura das propriedades JSON para camelCase, que é o padrão em APIs REST.
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                options.JsonSerializerOptions.WriteIndented = true;
+                // Formata a saída JSON com indentação apenas em desenvolvimento para facilitar a leitura.
+                options.JsonSerializerOptions.WriteIndented = builder.Environment.IsDevelopment();
+                // Ignora referências cíclicas para evitar erros de serialização.
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             });
 
+            // Registra suporte à exploração de endpoints para recursos como Swagger e descoberta de APIs.
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddCors(x => x.AddPolicy("AllowAll", y => { y.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }));
 
-            //Permite fazer a validação do ComponentModel.Annotations
+            // Cria uma política de CORS aberta para permitir chamadas de qualquer origem, método e cabeçalho.
+            builder.Services.AddCors(options => options.AddPolicy(AllowAllCorsPolicyName, policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+
+            // Desativa a resposta automática de model state inválido para permitir tratamento manual das validações.
             builder.Services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-            //Comprime o Json no Retorno da API, diminuindo o seu tamanho
+            // Habilita compactação das respostas para reduzir o tráfego enviado pela API.
             builder.Services.AddResponseCompression(options =>
             {
+                options.EnableForHttps = true;
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/json"]);
             });
 
-            //Configuração para que o IMemoryCache seja distribuido entre os servidores no balance. 
+            // Define o nível de compressão usado pelo Gzip para equilibrar desempenho e tamanho da resposta.
+            builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+
+            // Registra cache distribuído em memória para compartilhar dados temporários entre componentes da aplicação.
             builder.Services.AddDistributedMemoryCache();
         }
 
         public static void UseInitializer(this WebApplication app)
         {
-            //Informo que irei utilizar arquivos estáticos (wwwroot)
+            // Garante que a aplicação foi criada antes de configurar o pipeline HTTP.
+            ArgumentNullException.ThrowIfNull(app);
+
+            // Redireciona requisições HTTP para HTTPS para reforçar a comunicação segura.
+            app.UseHttpsRedirection();
+
+            // Habilita a resolução da página padrão e a publicação de arquivos estáticos da pasta wwwroot.
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
+            // Ativa a compactação das respostas usando a configuração registrada nos serviços.
+            app.UseResponseCompression();
+
+            // Em desenvolvimento exibe detalhes completos de erro; nos demais ambientes força políticas HTTP mais seguras.
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -76,20 +106,23 @@ namespace WebApi.Configurations
                 app.UseHsts();
             }
 
-            //Padrão de rotas do MVC
+            // Inicializa o roteamento para localizar o endpoint correto de cada requisição.
             app.UseRouting();
-            app.MapControllers();
 
-            //Força a API responder apenas em HTTPS
-            app.UseHttpsRedirection();
+            // Aplica a política de CORS configurada para liberar o acesso dos clientes permitidos.
+            app.UseCors(AllowAllCorsPolicyName);
 
-            //Poder realizar chamadas localhost em tempo de desenvolvimento
-            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            // Executa a autenticação da requisição para identificar o usuário atual.
             app.UseAuthentication(); // Autenticação
+
+            // Valida autorização e perfis antes de permitir acesso aos endpoints protegidos.
             app.UseAuthorization(); // Roles
 
-            //Configura o Response
-            app.MapFallback(async context =>
+            // Mapeia os controllers da API como endpoints HTTP disponíveis.
+            app.MapControllers();
+
+            // Retorna uma resposta padronizada quando nenhuma rota configurada corresponder à requisição recebida.
+            app.MapFallback(static async context =>
             {
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
                 context.Response.ContentType = "application/json";
