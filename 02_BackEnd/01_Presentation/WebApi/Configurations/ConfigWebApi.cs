@@ -25,9 +25,6 @@ namespace WebApi.Configurations
             // Prepara a aplicação para funcionar corretamente quando hospedada com integração ao IIS.
             builder.WebHost.UseIISIntegration();
 
-            // Carrega e centraliza as configurações da API a partir dos arquivos de ambiente.
-            SettingApp.Start(builder.Configuration, builder.Environment.WebRootPath);
-
             // Aplica o proxy padrão do processo para todas as saídas HTTP quando essa opção estiver habilitada.
             if (SettingApp.Parameters.Proxy.Enable)
             {
