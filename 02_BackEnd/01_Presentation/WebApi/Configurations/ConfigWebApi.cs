@@ -123,7 +123,7 @@ namespace WebApi.Configurations
             {
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsJsonAsync(new CommandResult<string>(404, "Rota não encontrada", false, $"O caminho '{context.Request.Path}' não corresponde a nenhum endpoint válido.", null, null));
+                await context.Response.WriteAsJsonAsync(new CommandResult<string>(404, $"O caminho '{context.Request.Path}' não corresponde a nenhum endpoint válido.", null, null));
             });
         }
 

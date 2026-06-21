@@ -34,13 +34,13 @@ namespace WebApi.Configurations
                         context.HandleResponse();
                         context.Response.StatusCode = 401;
                         context.Response.ContentType = "application/json";
-                        return context.Response.WriteAsJsonAsync(new CommandResult<string>(401, "Não Autorizado", false, "Acesso não autorizado!", null, null));
+                        return context.Response.WriteAsJsonAsync(new CommandResult<string>(401, "Acesso não autorizado!", null, null));
                     },
                     OnForbidden = context =>
                     {
                         context.Response.StatusCode = 403;
                         context.Response.ContentType = "application/json";
-                        return context.Response.WriteAsJsonAsync(new CommandResult<string>(403, "Acesso Proibido", false, "Acesso proibido!", null, null));
+                        return context.Response.WriteAsJsonAsync(new CommandResult<string>(403, "Acesso proibido!", null, null));
                     }
                 };
             });
