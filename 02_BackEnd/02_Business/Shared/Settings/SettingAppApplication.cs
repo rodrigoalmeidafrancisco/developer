@@ -7,12 +7,13 @@
 
         }
 
-        public string Build { get; set; }
-        public string Environment { get; set; }
+        public string _Build { get; set; }
+        public string _Environment { get; set; }
+        public string _Release { get; set; }
         public string Name { get; set; }
         public List<string> Policys { get; set; }
         public List<KeyValuePair<string, string[]>> PolicysListAccess => ListOfAccessPolicies();
-        public string Release { get; set; }
+        public string Type { get; set; }
         public string WebUri { get; set; }
 
         private List<KeyValuePair<string, string[]>> ListOfAccessPolicies()

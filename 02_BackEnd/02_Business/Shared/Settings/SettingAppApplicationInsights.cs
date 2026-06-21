@@ -7,6 +7,6 @@
 
         }
 
-        public string InstrumentationKey { get; set; }
+        public string ConnectionString { get; set; }
     }
 }
