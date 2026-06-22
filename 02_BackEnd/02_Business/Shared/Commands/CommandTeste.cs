@@ -1,4 +1,5 @@
 ﻿using Shared.Commands._Base;
+using Shared.Notifications.Validations;
 
 namespace Shared.Commands
 {
@@ -15,10 +16,9 @@ namespace Shared.Commands
         {
             base.ValidarCommand();
 
-            if (Matricula == null)
-            {
-                AddNotification("A matrícula é obrigatória.");
-            }
+            AddNotifications(new Contract<CommandTeste>().Requires()
+                .IsNull(Matricula, "A matrícula é obrigatória.")
+            );
         }
 
     }
